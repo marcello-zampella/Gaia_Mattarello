@@ -342,15 +342,14 @@ async function runBoot() {
   const lines = [
     { text: 'GAIO MATTARELLO OS v1.337', speed:45 },
     { text: 'Copyright (C) 1997 Mattarello Corp.', speed:30 },
-    { text: '─────────────────────────────────', speed:15 },
+    { text: '───────────────────────────', speed:15 },
     { text: 'Caricamento kernel...', speed:40, suffix:' [', ok:'OK', close:']' },
     { text: 'Inizializzazione RAM 640K...', speed:35, suffix:' [', ok:'OK', close:']' },
-    { text: 'Caricamento driver schermo...', speed:35, suffix:' [', ok:'OK', close:']' },
     { text: 'Connessione al nucleo sicuro...', speed:35, suffix:' [', ok:'OK', close:']' },
-    { text: '─────────────────────────────────', speed:15 },
+    { text: '───────────────────────────', speed:15 },
     { text: 'AVVISO: sistema protetto.', speed:40, color:'#fa0' },
     { text: 'ACCESSO RISERVATO A PERSONALE AUTORIZZATO.', speed:30, color:'#fa0' },
-    { text: '─────────────────────────────────', speed:15 },
+    { text: '───────────────────────────', speed:15 },
   ];
 
   for (const l of lines) {
@@ -476,7 +475,7 @@ async function checkPassword() {
     applyTheme('green');
     document.getElementById('winAscii').style.display = 'block';
     document.getElementById('successMsg').style.display = 'block';
-    setTimeout(() => window.location.href = 'https://open.spotify.com/track/0HhSB4nAJpI5expWnZL199?si=o7oEYRX6ThWpS3yS38vNnQ', 3200);
+    setTimeout(() => window.location.href = 'spotify:track:0HhSB4nAJpI5expWnZL199', 3200);
   } else {
     await typeInto(verdict, '> RISULTATO: ', 30);
     const tag = document.createElement('span');
@@ -488,7 +487,7 @@ async function checkPassword() {
     document.body.classList.add('shake-screen');
     setTimeout(() => document.body.classList.remove('shake-screen'), 600);
     document.getElementById('errorMsg').style.display = 'block';
-    setTimeout(() => window.location.href = 'https://open.spotify.com/track/2kRFrWaLWiKq48YYVdGcm8?si=icp5HT7OQCqEO04Ya2WnAQ', 3200);
+    setTimeout(() => window.location.href = 'spotify:track:2kRFrWaLWiKq48YYVdGcm8', 3200);
   }
 }
 
