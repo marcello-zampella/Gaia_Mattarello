@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TERMINALE :: GAIO MATTARELLO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --main: #0044ff;
+    --main-dim: rgba(0,68,255,0.15);
+    --main-glow: rgba(0,68,255,0.5);
+    --bg: #000008;
+  }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'VT323', monospace;
+    overflow: hidden;
+    position: relative;
+    transition: background 0.5s;
+  }
+
+  body::before {
+    content:''; position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.18) 2px,rgba(0,0,0,0.18) 4px);
+    pointer-events:none; z-index:100;
+  }
+  body::after {
+    content:''; position:fixed; inset:0;
+    background: rgba(0,0,255,0.015);
+    animation: flicker 0.12s infinite;
+    pointer-events:none; z-index:99;
+  }
+  @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.96} }
+
+  .stars { position:fixed; inset:0; z-index:0; }
+  .star {
+    position:absolute; background:#44f; border-radius:50%;
+    animation: twinkle var(--d) infinite; opacity:0; transition: background 0.5s;
+  }
+  @keyframes twinkle { 0%,100%{opacity:0} 50%{opacity:0.7} }
+
+  .container {
+    position:relative; z-index:10;
+    width:94vw; max-width:420px;
+    border: 3px solid var(--main);
+    box-shadow: 0 0 18px var(--main), inset 0 0 18px var(--main-dim), 0 0 50px var(--main-glow);
+    background: rgba(0,0,8,0.97);
+    transition: border-color 0.5s, box-shadow 0.5s;
+  }
+
+  .titlebar {
+    background: var(--main);
+    color:#000; padding:7px 12px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:1rem; letter-spacing:2px;
+    transition: background 0.5s;
+  }
+  .titlebar-dots span {
+    display:inline-block; width:11px; height:11px;
+    background:#000; border-radius:50%; margin-left:4px; opacity:0.5;
+  }
+
+  .terminal-body { padding:16px; color:var(--main); line-height:1.5; transition: color 0.5s; }
+
+  /* ── BOOT SEQUENCE ── */
+  #bootSequence {
+    font-size: clamp(0.85rem, 4vw, 1rem);
+    color: var(--main);
+    min-height: 140px;
+  }
+  .boot-line { display:block; opacity:0; white-space: pre-wrap; word-break: break-word; }
+  .boot-line.visible { opacity:1; }
+  .boot-line .ok  { color:#0f0; }
+  .boot-line .err { color:#f00; }
+  .boot-cursor { display:inline-block; animation: blink 1s step-end infinite; }
+
+  /* ── ASCII art ── */
+  .ascii-art {
+    display:none;
+    text-align:center;
+    font-size: clamp(0.52rem, 3.8vw, 0.82rem);
+    color: var(--main);
+    margin-bottom:14px;
+    text-shadow: 0 0 8px var(--main);
+    white-space:pre; line-height:1.15;
+    transition: color 0.5s, text-shadow 0.5s;
+  }
+  .win-ascii {
+    display:none; text-align:center;
+    font-size: clamp(0.6rem, 3.8vw, 0.88rem);
+    color:#0f0;
+    text-shadow: 0 0 14px #0f0, 0 0 30px #0f0;
+    white-space:pre; line-height:1.15;
+    animation: pulse-win 0.6s infinite alternate;
+    margin-bottom:14px;
+  }
+  @keyframes pulse-win { from{text-shadow:0 0 8px #0f0} to{text-shadow:0 0 30px #0f0,0 0 60px #0f0} }
+
+  hr.divider { border:none; border-top:1px dashed var(--main); margin:12px 0; opacity:0.4; }
+
+  .input-label {
+    color:var(--main); font-size: clamp(1rem,5vw,1.2rem);
+    margin-bottom:8px; display:block;
+    text-shadow: 0 0 6px var(--main); transition: color 0.5s;
+  }
+  .input-row { display:flex; gap:8px; align-items:stretch; }
+  .pwd-input {
+    flex:1; background:#000;
+    border: 2px solid var(--main);
+    color: var(--main);
+    font-family:'VT323',monospace;
+    font-size: clamp(1.2rem,5.5vw,1.5rem);
+    padding:8px 10px; outline:none; letter-spacing:3px;
+    caret-color: var(--main);
+    box-shadow: 0 0 8px var(--main-glow), inset 0 0 6px var(--main-dim);
+    transition: border-color 0.5s, color 0.5s, box-shadow 0.5s;
+    -webkit-appearance:none; border-radius:0;
+  }
+  .btn {
+    background:#000; border: 2px solid var(--main);
+    color: var(--main); font-family:'VT323',monospace;
+    font-size: clamp(1rem,4.5vw,1.2rem); padding:8px 12px;
+    cursor:pointer; letter-spacing:1px;
+    text-shadow: 0 0 6px var(--main);
+    transition: background 0.1s, color 0.1s, border-color 0.5s;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation; border-radius:0;
+  }
+  .btn:active { background:var(--main); color:#000; box-shadow:0 0 14px var(--main); }
+
+  /* ── ANALYSIS OVERLAY ── */
+  #analysisArea {
+    display:none;
+    font-size: clamp(0.88rem, 4.2vw, 1.05rem);
+    color: var(--main);
+    min-height: 100px;
+  }
+  .analysis-line { display:block; margin-bottom:2px; word-break: break-all; }
+  .analysis-line .ok  { color:#0f0; }
+  .analysis-line .err { color:#f00; }
+  .progress-bar-wrap {
+    margin:8px 0;
+    border: 1px solid var(--main);
+    height: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 6px var(--main-glow);
+  }
+  .progress-bar-fill {
+    height:100%; width:0%;
+    background: var(--main);
+    transition: width 0.05s linear;
+    box-shadow: 0 0 10px var(--main);
+  }
+  .progress-label {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size: clamp(0.8rem,3.5vw,0.95rem);
+    color:#000; mix-blend-mode: difference;
+    letter-spacing:2px;
+  }
+
+  .status-area { margin-top:12px; font-size: clamp(1rem,4.5vw,1.2rem); }
+
+  .success-msg {
+    display:none; color:#0f0; text-align:center;
+    animation: successAnim 0.4s ease;
+  }
+  @keyframes successAnim { 0%{transform:scale(0.85);opacity:0} 60%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+  .success-msg .sub { font-size: clamp(1rem,4.5vw,1.3rem); margin-top:6px; text-shadow:0 0 10px #0f0; }
+
+  .error-msg {
+    display:none; color:#f00; text-align:center;
+    border:2px solid #f00; padding:10px;
+    box-shadow:0 0 20px #f00, inset 0 0 10px rgba(255,0,0,0.1);
+    animation: shake 0.5s ease;
+  }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-8px)} 80%{transform:translateX(8px)} }
+  .error-msg .err-ascii { font-size: clamp(1.1rem,5vw,1.6rem); text-shadow:0 0 10px #f00; white-space:pre; line-height:1.1; }
+
+  .redirect-msg { font-size: clamp(0.85rem,3.5vw,1rem); margin-top:8px; opacity:0.8; animation: blink 0.8s step-end infinite; }
+
+  .footer {
+    border-top:1px solid var(--main); padding:7px 16px;
+    display:flex; justify-content:space-between;
+    font-size:0.78rem; color:var(--main); opacity:0.5; letter-spacing:1px;
+    transition: border-color 0.5s, color 0.5s;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes bodyShake { 0%,100%{transform:translate(0)} 20%{transform:translate(-6px,3px)} 40%{transform:translate(6px,-3px)} 60%{transform:translate(-4px,2px)} 80%{transform:translate(4px,-2px)} }
+  .shake-screen { animation: bodyShake 0.5s ease; }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container" id="mainContainer">
+  <div class="titlebar" id="titlebar">
+    <span>■ GAIO MATTARELLO OS v1.337</span>
+    <div class="titlebar-dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="terminal-body">
+
+    <!-- BOOT SEQUENCE -->
+    <div id="bootSequence"></div>
+
+    <!-- ASCII GAIO (appare dopo boot) -->
+    <div class="ascii-art" id="asciiBlue">
+ ██████╗  █████╗ ██╗ ██████╗ 
+██╔════╝ ██╔══██╗██║██╔═══██╗
+██║  ███╗███████║██║██║   ██║
+██║   ██║██╔══██║██║██║   ██║
+╚██████╔╝██║  ██║██║╚██████╔╝
+ ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ 
+    </div>
+
+    <!-- ASCII HAI VINTO -->
+    <div class="win-ascii" id="winAscii">
+██╗  ██╗ █████╗ ██╗
+██║  ██║██╔══██╗██║
+███████║███████║██║
+██╔══██║██╔══██║██║
+██║  ██║██║  ██║██║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝
+
+██╗   ██╗██╗███╗   ██╗████████╗ ██████╗ ██╗
+██║   ██║██║████╗  ██║╚══██╔══╝██╔═══██╗██║
+██║   ██║██║██╔██╗ ██║   ██║   ██║   ██║██║
+╚██╗ ██╔╝██║██║╚██╗██║   ██║   ██║   ██║╚═╝
+ ╚████╔╝ ██║██║ ╚████║   ██║   ╚██████╔╝██╗
+  ╚═══╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝
+    </div>
+
+    <!-- INPUT (appare dopo boot) -->
+    <div id="inputGroup" style="display:none">
+      <hr class="divider">
+      <label class="input-label" for="pwdField">&gt; INSERIRE PASSWORD:</label>
+      <div class="input-row">
+        <input class="pwd-input" type="password" id="pwdField"
+          placeholder="********" autocomplete="off" spellcheck="false" maxlength="30"/>
+        <button class="btn" id="submitBtn" onclick="checkPassword()">[ OK ]</button>
+      </div>
+    </div>
+
+    <!-- ANALISI -->
+    <div id="analysisArea"></div>
+
+    <!-- ESITO -->
+    <div class="status-area">
+      <div class="success-msg" id="successMsg">
+        <div class="sub">★ ACCESSO CONSENTITO ★</div>
+        <div class="redirect-msg">&gt;&gt; CARICAMENTO... REDIRECT &lt;&lt;</div>
+      </div>
+      <div class="error-msg" id="errorMsg">
+        <div class="err-ascii">
+╔══════════════════╗
+║  ACCESSO NEGATO  ║
+║  PASSWORD ERRATA ║
+╚══════════════════╝</div>
+        <div class="redirect-msg">!! INTRUSO — REDIRECT !!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>MEM: 640K</span>
+    <span id="clockDisplay">00:00:00</span>
+    <span>DOS 6.22</span>
+  </div>
+</div>
+
+<script>
+// ── Theme ──
+const themes = {
+  blue:  { main:'#0044ff', dim:'rgba(0,68,255,0.15)',  glow:'rgba(0,68,255,0.5)',  bg:'#000008', star:'#44f' },
+  green: { main:'#00ff00', dim:'rgba(0,255,0,0.15)',   glow:'rgba(0,255,0,0.4)',   bg:'#000800', star:'#0f0' },
+  red:   { main:'#ff0000', dim:'rgba(255,0,0,0.15)',   glow:'rgba(255,0,0,0.4)',   bg:'#080000', star:'#f00' },
+};
+function applyTheme(t) {
+  const th = themes[t], r = document.documentElement.style;
+  r.setProperty('--main', th.main);
+  r.setProperty('--main-dim', th.dim);
+  r.setProperty('--main-glow', th.glow);
+  r.setProperty('--bg', th.bg);
+  document.body.style.background = th.bg;
+  document.querySelectorAll('.star').forEach(s => s.style.background = th.star);
+}
+
+// ── Stars ──
+const starsEl = document.getElementById('stars');
+for (let i=0; i<70; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const sz = Math.random()*2+1;
+  s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*3+1).toFixed(1)}s;animation-delay:${(Math.random()*3).toFixed(1)}s`;
+  starsEl.appendChild(s);
+}
+
+// ── Clock ──
+function tick() {
+  const n=new Date();
+  document.getElementById('clockDisplay').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+tick(); setInterval(tick,1000);
+
+// ── Utility ──
+function delay(ms) { return new Promise(r => setTimeout(r,ms)); }
+
+function typeInto(el, text, speed=38) {
+  return new Promise(async resolve => {
+    for (const ch of text) {
+      el.textContent += ch;
+      await delay(speed + Math.random()*20);
+    }
+    resolve();
+  });
+}
+
+// Append a new line to a container, return the span
+function addLine(container, cls='') {
+  const span = document.createElement('span');
+  span.className = 'boot-line visible' + (cls ? ' '+cls : '');
+  container.appendChild(span);
+  return span;
+}
+
+// ── BOOT SEQUENCE ──
+async function runBoot() {
+  const boot = document.getElementById('bootSequence');
+
+  const lines = [
+    { text: 'GAIO MATTARELLO OS v1.337', speed:45 },
+    { text: 'Copyright (C) 1997 Mattarello Corp.', speed:30 },
+    { text: '─────────────────────────────────', speed:15 },
+    { text: 'Caricamento kernel...', speed:40, suffix:' [', ok:'OK', close:']' },
+    { text: 'Inizializzazione RAM 640K...', speed:35, suffix:' [', ok:'OK', close:']' },
+    { text: 'Caricamento driver schermo...', speed:35, suffix:' [', ok:'OK', close:']' },
+    { text: 'Connessione al nucleo sicuro...', speed:35, suffix:' [', ok:'OK', close:']' },
+    { text: '─────────────────────────────────', speed:15 },
+    { text: 'AVVISO: sistema protetto.', speed:40, color:'#fa0' },
+    { text: 'ACCESSO RISERVATO A PERSONALE AUTORIZZATO.', speed:30, color:'#fa0' },
+    { text: '─────────────────────────────────', speed:15 },
+  ];
+
+  for (const l of lines) {
+    const span = addLine(boot);
+    if (l.color) span.style.color = l.color;
+    await typeInto(span, l.text, l.speed);
+    if (l.suffix) {
+      span.textContent += l.suffix;
+      await delay(280 + Math.random()*200);
+      const ok = document.createElement('span');
+      ok.className = 'ok';
+      ok.textContent = l.ok;
+      span.appendChild(ok);
+      span.appendChild(document.createTextNode(l.close));
+    }
+    await delay(80);
+  }
+
+  // Final prompt line
+  const promptSpan = addLine(boot);
+  await typeInto(promptSpan, 'C:\\GAIO> ', 40);
+  const msg = 'Inserire la password per accedere al terminale di Gaio Mattarello.';
+  await typeInto(promptSpan, msg, 32);
+  const cur = document.createElement('span');
+  cur.className = 'boot-cursor';
+  cur.textContent = '█';
+  promptSpan.appendChild(cur);
+
+  await delay(400);
+
+  // Show ASCII + input
+  document.getElementById('asciiBlue').style.display = 'block';
+  document.getElementById('inputGroup').style.display = 'block';
+  document.getElementById('pwdField').focus();
+}
+
+// ── PASSWORD CHECK ──
+document.getElementById('pwdField').addEventListener('keydown', e => { if(e.key==='Enter') checkPassword(); });
+
+async function checkPassword() {
+  const val = document.getElementById('pwdField').value;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('pwdField').disabled = true;
+
+  // Hide input area
+  document.getElementById('inputGroup').style.display = 'none';
+  document.getElementById('asciiBlue').style.display = 'none';
+  document.getElementById('bootSequence').style.display = 'none';
+
+  const area = document.getElementById('analysisArea');
+  area.style.display = 'block';
+
+  const isCorrect = val.trim().toLowerCase() === 'comala';
+
+  // ── Analysis animation ──
+  const steps = [
+    { text:'> AVVIO ANALISI CREDENZIALI...', d:350 },
+    { text:`> PASSWORD RICEVUTA: ${'*'.repeat(Math.max(val.length,3))}`, d:300 },
+    { text:'> CONTROLLO LUNGHEZZA...', d:400, ok:true },
+    { text:'> SCANSIONE CARATTERI SPECIALI...', d:500, ok:true },
+    { text:'> VERIFICA CIFRATURA SHA-1337...', d:600, ok:true },
+    { text:'> CONFRONTO CON DATABASE SICURO...', d:800 },
+  ];
+
+  for (const s of steps) {
+    const line = document.createElement('span');
+    line.className = 'analysis-line';
+    area.appendChild(line);
+    await typeInto(line, s.text, 28);
+    if (s.ok) {
+      line.textContent += ' ';
+      const tag = document.createElement('span');
+      tag.className = 'ok'; tag.textContent = '[OK]';
+      line.appendChild(tag);
+    }
+    await delay(s.d);
+  }
+
+  // Progress bar
+  const wrap = document.createElement('div');
+  wrap.className = 'progress-bar-wrap';
+  const fill = document.createElement('div');
+  fill.className = 'progress-bar-fill';
+  const label = document.createElement('div');
+  label.className = 'progress-label';
+  label.textContent = 'ANALISI...';
+  wrap.appendChild(fill); wrap.appendChild(label);
+  area.appendChild(wrap);
+
+  // Animate bar 0→100 slowly with fake pauses
+  async function animBar(from, to, ms) {
+    const steps2 = to - from;
+    for (let i=0; i<=steps2; i++) {
+      fill.style.width = (from+i)+'%';
+      await delay(ms);
+    }
+  }
+  await animBar(0, 47, 28);
+  await delay(350); // fake stall
+  await animBar(47, 73, 22);
+  await delay(500); // dramatic stall
+  await animBar(73, 99, 18);
+  await delay(700); // last breath...
+  await animBar(99, 100, 30);
+  label.textContent = '100%';
+
+  await delay(300);
+  wrap.remove();
+
+  // Verdict line
+  const verdict = document.createElement('span');
+  verdict.className = 'analysis-line';
+  area.appendChild(verdict);
+
+  if (isCorrect) {
+    await typeInto(verdict, '> RISULTATO: ', 30);
+    const tag = document.createElement('span');
+    tag.className = 'ok'; tag.textContent = '[ ACCESSO CONSENTITO ]';
+    verdict.appendChild(tag);
+    await delay(400);
+    area.style.display = 'none';
+    applyTheme('green');
+    document.getElementById('winAscii').style.display = 'block';
+    document.getElementById('successMsg').style.display = 'block';
+    setTimeout(() => window.location.href = 'https://open.spotify.com/track/0HhSB4nAJpI5expWnZL199?si=o7oEYRX6ThWpS3yS38vNnQ', 3200);
+  } else {
+    await typeInto(verdict, '> RISULTATO: ', 30);
+    const tag = document.createElement('span');
+    tag.className = 'err'; tag.textContent = '[ ACCESSO NEGATO ]';
+    verdict.appendChild(tag);
+    await delay(400);
+    area.style.display = 'none';
+    applyTheme('red');
+    document.body.classList.add('shake-screen');
+    setTimeout(() => document.body.classList.remove('shake-screen'), 600);
+    document.getElementById('errorMsg').style.display = 'block';
+    setTimeout(() => window.location.href = 'https://open.spotify.com/track/2kRFrWaLWiKq48YYVdGcm8?si=icp5HT7OQCqEO04Ya2WnAQ', 3200);
+  }
+}
+
+// ── START ──
+runBoot();
+</script>
+</body>
+</html>
